@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
           headers: {
             "Content-Type": "application/json",
             ...(process.env.N8N_WEBHOOK_SECRET
-              ? { Authorization: `Bearer ${process.env.N8N_WEBHOOK_SECRET}` }
+              ? { "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET }
               : {}),
           },
           body: JSON.stringify({
