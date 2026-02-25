@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email              String      @unique @db.VarChar(255)
+  passwordHash       String      @map("password_hash") @db.VarChar(255)
+  name               String?     @db.VarChar(255)
+  schoolName         String?     @map("school_name") @db.VarChar(255)
+  stripeCustomerId   String?     @map("stripe_customer_id") @db.VarChar(255)
+  subscriptionStatus String      @default("trial") @map("subscription_status") @db.VarChar(50)
+  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz()
+  scrapeJobs         ScrapeJob[]
+
+  @@map("users")
+}
+
+model ScrapeJob {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String       @map("user_id") @db.Uuid
+  kommun          String       @db.VarChar(100)
+  yrkesomraden    String[]
+  status          String       @default("pending") @db.VarChar(50)
+  totalCompanies  Int          @default(0) @map("total_companies")
+  progressPct     Int          @default(0) @map("progress_pct")
+  progressMessage String?      @map("progress_message")
+  errorMessage    String?      @map("error_message")
+  startedAt       DateTime?    @map("started_at") @db.Timestamptz()
+  completedAt     DateTime?    @map("completed_at") @db.Timestamptz()
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz()
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companies       Company[]    @relation("JobCompanies")
+
+  @@index([userId])
+  @@index([status])
+  @@map("scrape_jobs")
+}
+
+model Company {
+  id             String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orgnr          String?     @unique @db.VarChar(20)
+  name           String      @db.VarChar(500)
+  bransch        String?     @db.VarChar(500)
+  sniCodes       String?     @map("sni_codes")
+  yrkesomraden   String?
+  ort            String?     @db.VarChar(100)
+  adress         String?     @db.VarChar(500)
+  postnummer     String?     @db.VarChar(10)
+  telefon        String?     @db.VarChar(100)
+  epost          String?     @db.VarChar(255)
+  webbplats      String?     @db.VarChar(500)
+  antalAnstallda Int?        @map("antal_anstallda")
+  omsattningSek  BigInt?     @map("omsattning_sek")
+  scrapedAt      DateTime    @default(now()) @map("scraped_at") @db.Timestamptz()
+  jobs           ScrapeJob[] @relation("JobCompanies")
+
+  @@index([orgnr])
+  @@index([ort])
+  @@map("companies")
+}
